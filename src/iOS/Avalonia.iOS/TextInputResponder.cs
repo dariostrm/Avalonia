@@ -443,6 +443,13 @@ partial class AvaloniaView
             // todo ? ignore?
         }
 
+        // UIKit interprets the caret/selection rectangles returned by GetCaretRectForPosition
+        // and GetFirstRectForRange in the coordinate space of this view. Reporting the hosting
+        // AvaloniaView (a UIView) gives UIKit a valid anchor to position input-related UI, such as
+        // the floating numeric keyboard introduced on iPadOS 26.
+        [Export("textInputView")]
+        public UIView TextInputView => _view;
+
         CGRect IUITextInput.GetFirstRectForRange(UITextRange range)
         {
 
@@ -456,12 +463,15 @@ partial class AvaloniaView
 
         CGRect IUITextInput.GetCaretRectForPosition(UITextPosition? position)
         {
-            // TODO: Query from the input client
             Logger.TryGet(LogEventLevel.Debug, ImeLog)?
                 .Log(null, "IUITextInput:GetCaretRectForPosition");
-            var rect = _client.CursorRectangle;
+            // Use the same visual-root-transformed rect as GetFirstRectForRange so both caret
+            // geometry methods report in textInputView (_view) coordinates. _client.CursorRectangle
+            // is relative to TextViewVisual (the TextPresenter), a different origin, and reporting
+            // it here left UIKit without a valid anchor for the floating keyboard on iPadOS 26.
+            var r = _view._cursorRect;
 
-            return new CGRect(rect.X, rect.Y, rect.Width, rect.Height);
+            return new CGRect(r.Left, r.Top, r.Width, r.Height);
         }
 
         UITextPosition IUITextInput.GetClosestPositionToPoint(CGPoint point)
