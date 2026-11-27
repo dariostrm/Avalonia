@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls.Chrome;
 using Avalonia.Controls.Platform;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml.Templates;
 using Avalonia.Media;
 using Avalonia.Platform;
@@ -19,6 +20,34 @@ namespace Avalonia.Controls.UnitTests
 {
     public class WindowTests : ScopedTestBase
     {
+        [Fact]
+        public void Closing_Window_Does_Not_Clear_Focus_Restored_By_Its_Owner()
+        {
+            using (UnitTestApplication.Start(TestServices.FocusableWindow))
+            {
+                var ownerButton = new Button();
+                var owner = new Window { Content = ownerButton };
+                owner.Show();
+                ownerButton.Focus();
+
+                // A dialog that is activated, with nothing focused in it.
+                var dialog = new Window { Content = new TextBox() };
+                dialog.Show(owner);
+                ((FocusManager)dialog.FocusManager!).SetFocusScope(dialog);
+                Assert.Null(owner.FocusManager!.GetFocusedElement());
+
+                // On Windows the owner is activated, and restores its focus, before the closing window
+                // is destroyed.
+                ((FocusManager)owner.FocusManager!).SetFocusScope(owner);
+                Assert.True(ownerButton.IsFocused);
+
+                dialog.Close();
+
+                Assert.True(ownerButton.IsFocused);
+                Assert.Same(ownerButton, owner.FocusManager!.GetFocusedElement());
+            }
+        }
+
         [Fact]
         public void Setting_Title_Should_Set_Impl_Title()
         {

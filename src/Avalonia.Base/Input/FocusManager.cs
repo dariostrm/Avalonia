@@ -184,8 +184,19 @@ namespace Avalonia.Input
         [PrivateApi]
         public void RemoveFocusRoot(IFocusScope scope)
         {
-            if (scope == _focusRoot)
-                Focus(null);
+            if (scope != _focusRoot)
+                return;
+
+            // Focus may already have moved to another root: on Windows, the owner of a closing dialog
+            // is activated (and restores its focus) before the dialog is destroyed. Don't clear that.
+            if (Current is { } current && GetFocusScope(current) is { } currentScope &&
+                GetFocusRoot(currentScope) is { } currentRoot && currentRoot != _focusRoot)
+            {
+                _focusRoot = null;
+                return;
+            }
+
+            Focus(null);
         }
 
         [PrivateApi]
