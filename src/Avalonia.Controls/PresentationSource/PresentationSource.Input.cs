@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Avalonia.Controls.Platform;
 using Avalonia.Diagnostics;
 using Avalonia.Input;
 using Avalonia.Input.Raw;
@@ -26,6 +27,10 @@ internal partial class PresentationSource
             var hitTestElement = rootElement.InputHitTest(pointerArgs.Position, enabledElementsOnly: false);
 
             pointerArgs.InputHitTestResult = (hitTestElement, FirstEnabledAncestor(hitTestElement));
+        }
+        else if (e is RawKeyEventArgs keyArgs)
+        {
+            keyArgs.IsInputPaneOpen = PlatformImpl?.TryGetFeature<IInputPane>()?.State == InputPaneState.Open;
         }
 
         _inputManager?.ProcessInput(e);

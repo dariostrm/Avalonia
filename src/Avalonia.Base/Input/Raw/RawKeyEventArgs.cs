@@ -50,5 +50,11 @@ namespace Avalonia.Input.Raw
         public RawInputModifiers? ConsumedModifiers { get; set; }
 
         public PlatformKeyInfo? PlatformKeyInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the soft keyboard (input pane) of the root was
+        /// open when the key was received. Soft keyboards may send key events (e.g. Backspace, Enter).
+        /// </summary>
+        internal bool IsInputPaneOpen { get; set; }
     }
 }

@@ -23,6 +23,13 @@ namespace Avalonia.Input
         private static readonly AttachedProperty<IInputElement> FocusedElementProperty =
             AvaloniaProperty.RegisterAttached<FocusManager, StyledElement, IInputElement>("FocusedElement");
 
+        /// <summary>
+        /// Tracks whether the element in <see cref="FocusedElementProperty"/> showed a focus visual,
+        /// so that restoring focus to the scope (e.g. when its window is activated again) keeps that state, like WinUI.
+        /// </summary>
+        private static readonly AttachedProperty<bool> FocusedElementIsFocusVisibleProperty =
+            AvaloniaProperty.RegisterAttached<FocusManager, StyledElement, bool>("FocusedElementIsFocusVisible");
+
         private StyledElement? _focusRoot;
 
         /// <summary>
@@ -108,18 +115,21 @@ namespace Avalonia.Input
             KeyboardDevice keyboardDevice,
             IInputElement element,
             NavigationMethod method,
-            KeyModifiers keyModifiers)
+            KeyModifiers keyModifiers,
+            bool? isFocusVisible = null)
         {
             if (!CanFocus(element))
                 return false;
 
-            keyboardDevice.SetFocusedElement(element, method, keyModifiers);
+            keyboardDevice.SetFocusedElement(element, method, keyModifiers, true, isFocusVisible);
 
             if (keyboardDevice.FocusedElement is { } effectivelyFocusedElement)
             {
                 if (GetFocusScope(effectivelyFocusedElement) is { } scope)
                 {
                     scope.SetValue(FocusedElementProperty, effectivelyFocusedElement);
+                    scope.SetValue(FocusedElementIsFocusVisibleProperty,
+                        (effectivelyFocusedElement as InputElement)?.IsFocusVisible == true);
                     _focusRoot = GetFocusRoot(scope);
                 }
 
@@ -163,7 +173,11 @@ namespace Avalonia.Input
 
             if (GetFocusedElement(scope) is { } focused)
             {
-                Focus(focused);
+                // Keep the focus visual state the element had before, instead of deciding it
+                // from the most recent input, which may not have reached the application
+                // (e.g. Alt+Tab or a click on the title bar).
+                var isFocusVisible = (scope as StyledElement)?.GetValue(FocusedElementIsFocusVisibleProperty) == true;
+                FocusCore(keyboardDevice, focused, NavigationMethod.Unspecified, KeyModifiers.None, isFocusVisible);
             }
             else if (scope is IInputElement scopeElement && CanFocus(scopeElement))
             {

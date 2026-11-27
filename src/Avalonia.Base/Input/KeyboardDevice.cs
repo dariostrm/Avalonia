@@ -143,6 +143,27 @@ namespace Avalonia.Input
             KeyModifiers keyModifiers,
             bool isFocusChangeCancellable)
         {
+            SetFocusedElement(element, method, keyModifiers, isFocusChangeCancellable, null);
+        }
+
+        /// <summary>
+        /// Sets the focused element, optionally overriding whether it shows a focus visual.
+        /// </summary>
+        /// <param name="element">The element to focus.</param>
+        /// <param name="method">The method by which focus was changed.</param>
+        /// <param name="keyModifiers">Any key modifiers active at the time of focus.</param>
+        /// <param name="isFocusChangeCancellable">Whether the focus change can be cancelled or redirected.</param>
+        /// <param name="isFocusVisible">
+        /// Whether the newly focused element shows a focus visual. When null, it is derived from
+        /// <paramref name="method"/> and, for <see cref="NavigationMethod.Unspecified"/>, from the most recent input device.
+        /// </param>
+        internal void SetFocusedElement(
+            IInputElement? element,
+            NavigationMethod method,
+            KeyModifiers keyModifiers,
+            bool isFocusChangeCancellable,
+            bool? isFocusVisible)
+        {
             if (element != FocusedElement)
             {
                 var interactive = FocusedElement as Interactive;
@@ -216,7 +237,8 @@ namespace Avalonia.Input
                         OldFocusedElement = oldElement,
                         NewFocusedElement = element,
                         NavigationMethod = method,
-                        KeyModifiers = keyModifiers
+                        KeyModifiers = keyModifiers,
+                        IsFocusVisible = isFocusVisible ?? GetIsFocusVisible(method)
                     });
 
                     _textInputManager.SetFocusedElement(element);
@@ -224,6 +246,17 @@ namespace Avalonia.Input
                 }
             }
         }
+
+        /// <summary>
+        /// Decides whether focus moved with <paramref name="method"/> shows a focus visual.
+        /// Like WinUI, a focus change without a navigation method shows it only when the most recent input came from a keyboard.
+        /// </summary>
+        private bool GetIsFocusVisible(NavigationMethod method) => method switch
+        {
+            NavigationMethod.Tab or NavigationMethod.Directional => true,
+            NavigationMethod.Unspecified => (InputManager as InputManager)?.LastInputDevice == LastInputDevice.Keyboard,
+            _ => false,
+        };
 
         protected void RaisePropertyChanged([CallerMemberName] string propertyName = "")
         {

@@ -479,6 +479,12 @@ namespace Avalonia.Input
         }
 
         /// <summary>
+        /// Gets a value indicating whether the element is focused and shows a focus visual
+        /// (the <c>:focus-visible</c> pseudo-class).
+        /// </summary>
+        internal bool IsFocusVisible => _isFocusVisible;
+
+        /// <summary>
         /// Gets or sets a value indicating whether the control is considered for hit testing.
         /// </summary>
         public bool IsHitTestVisible
@@ -647,7 +653,7 @@ namespace Avalonia.Input
         private void OnGotFocusCore(FocusChangedEventArgs e)
         {
             var isFocused = e.Source == this;
-            _isFocusVisible = isFocused && (e.NavigationMethod == NavigationMethod.Directional || e.NavigationMethod == NavigationMethod.Tab);
+            _isFocusVisible = isFocused && e.IsFocusVisible;
             IsFocused = isFocused;
             OnGotFocus(e);
         }

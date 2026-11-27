@@ -393,9 +393,7 @@ namespace Avalonia.Controls
         {
             base.OnGotFocus(e);
 
-            if (IsFocused &&
-                (e.NavigationMethod == NavigationMethod.Tab ||
-                 e.NavigationMethod == NavigationMethod.Directional))
+            if (IsFocusVisible)
             {
                 var adornerLayer = AdornerLayer.GetAdornerLayer(this);
 

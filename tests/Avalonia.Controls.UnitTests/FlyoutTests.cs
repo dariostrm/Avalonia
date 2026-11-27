@@ -389,6 +389,39 @@ namespace Avalonia.Controls.UnitTests
             }
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Flyout_Content_And_Restored_Target_Focus_Visual_Follows_Last_Input_Device(bool keyboard)
+        {
+            using (CreateServicesWithFocus())
+            {
+                var window = PreparedWindow();
+
+                var inner = new Button();
+                var button = new Button
+                {
+                    Flyout = new Flyout { Content = new Panel { Children = { inner } } }
+                };
+
+                window.Content = button;
+                window.Show();
+
+                button.Focus(keyboard ? NavigationMethod.Tab : NavigationMethod.Pointer);
+                Control_FocusVisibleTests.SendInput(window.InputRoot, keyboard);
+
+                button.Flyout.ShowAt(button);
+
+                Assert.True(inner.IsFocused);
+                Assert.Equal(keyboard, inner.Classes.Contains(":focus-visible"));
+
+                button.Flyout.Hide();
+
+                Assert.True(button.IsFocused);
+                Assert.Equal(keyboard, button.Classes.Contains(":focus-visible"));
+            }
+        }
+
         [Fact]
         public void ShowMode_Transient_Does_Not_Move_Focus_From_Target()
         {
