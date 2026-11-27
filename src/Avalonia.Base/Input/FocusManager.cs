@@ -222,7 +222,22 @@ namespace Avalonia.Input
         /// </summary>
         /// <param name="e">The element.</param>
         /// <returns>True if the element can be focused.</returns>
-        internal static bool CanFocus(IInputElement e) => e.Focusable && e.IsEffectivelyEnabled && IsVisible(e);
+        internal static bool CanFocus(IInputElement e) => e.Focusable && CanHoldFocusInEnabledState(e) && IsVisible(e);
+
+        /// <summary>
+        /// Checks if the specified element's enabled state allows it to hold focus: it is enabled, or
+        /// <see cref="InputElement.AllowFocusWhenDisabled"/> is set.
+        /// </summary>
+        internal static bool CanHoldFocusInEnabledState(IInputElement e) =>
+            e is InputElement ie ? ie.CanHoldFocusInEnabledState : e.IsEffectivelyEnabled;
+
+        /// <summary>
+        /// Checks if the specified element's enabled state allows keyboard navigation to move focus to it:
+        /// it is enabled, or both <see cref="InputElement.AllowFocusWhenDisabled"/> and
+        /// <see cref="InputElement.IsTabStopWhenDisabled"/> are set.
+        /// </summary>
+        internal static bool IsNavigableInEnabledState(IInputElement e) =>
+            e is InputElement ie ? ie.IsNavigableInEnabledState : e.IsEffectivelyEnabled;
 
         private static bool CanPointerFocus(IInputElement e, PointerEventArgs ev)
         {

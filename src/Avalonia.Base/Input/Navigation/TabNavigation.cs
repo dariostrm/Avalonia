@@ -650,12 +650,12 @@ namespace Avalonia.Input.Navigation
         internal static bool IsTabStop(IInputElement e)
         {
             if (e is InputElement ie)
-                return ie.Focusable && KeyboardNavigation.GetIsTabStop(ie) && ie.IsVisible && ie.IsEffectivelyEnabled;
+                return ie.Focusable && KeyboardNavigation.GetIsTabStop(ie) && ie.IsVisible && ie.IsNavigableInEnabledState;
             return false;
         }
 
         private static bool IsTabStopOrGroup(IInputElement e) => IsTabStop(e) || IsGroup(e);
         private static bool IsVisible(IInputElement e) => (e as Visual)?.IsVisible ?? true;
-        private static bool IsVisibleAndEnabled(IInputElement e) => IsVisible(e) && e.IsEffectivelyEnabled;
+        private static bool IsVisibleAndEnabled(IInputElement e) => IsVisible(e) && FocusManager.IsNavigableInEnabledState(e);
     }
 }

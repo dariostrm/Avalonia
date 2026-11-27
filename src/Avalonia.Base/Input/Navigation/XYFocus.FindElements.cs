@@ -60,12 +60,12 @@ public partial class XYFocus
     {
         // We don't need to check for effective values, as we've already checked parents of this subtree on previous steps. 
         return candidate.IsVisible &&
-               candidate.IsEnabled;
+               (candidate.IsEnabled || (candidate.AllowFocusWhenDisabled && candidate.IsTabStopWhenDisabled));
     }
 
     private static bool IsValidCandidate(InputElement candidate, KeyDeviceType? inputKeyDeviceType)
     {
-        return candidate.Focusable && candidate.IsEffectivelyEnabled && candidate.IsEffectivelyVisible
+        return candidate.Focusable && candidate.IsNavigableInEnabledState && candidate.IsEffectivelyVisible
                // Only allow candidate focus, if original key device type could focus it.
                && XYFocusHelpers.IsAllowedXYNavigationMode(candidate, inputKeyDeviceType);
     }

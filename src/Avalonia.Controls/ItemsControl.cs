@@ -817,7 +817,7 @@ namespace Avalonia.Controls
                 }
 
                 if (result.Focusable &&
-                    result.IsEffectivelyEnabled &&
+                    FocusManager.IsNavigableInEnabledState(result) &&
                     result.IsEffectivelyVisible)
                 {
                     return result;

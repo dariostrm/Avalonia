@@ -804,6 +804,47 @@ namespace Avalonia.Controls.UnitTests.Primitives
         }
 
         [Fact]
+        public void Closing_Popup_Restores_Focus_To_Disabled_Element_When_AllowFocusWhenDisabled()
+        {
+            using (CreateServicesWithFocus())
+            {
+                var target = new Button();
+                var popupButton = new Button();
+                var popup = new Popup
+                {
+                    PlacementTarget = target,
+                    Child = popupButton
+                };
+
+                var window = PreparedWindow(new StackPanel { Children = { target, popup } });
+                window.AllowFocusWhenDisabled = true;
+
+                target.Focus();
+                popup.Open();
+
+                if (popup.Host is OverlayPopupHost host)
+                {
+                    host.Measure(Size.Infinity);
+                    host.Arrange(new Rect(host.DesiredSize));
+                }
+
+                Assert.True(popupButton.Focus());
+
+                // E.g. a button whose command awaits the popup.
+                target.IsEnabled = false;
+
+                popup.Close();
+
+                Assert.True(target.IsFocused);
+                Assert.Same(target, window.FocusManager.GetFocusedElement());
+
+                target.IsEnabled = true;
+
+                Assert.True(target.IsFocused);
+            }
+        }
+
+        [Fact]
         public void Prog_Close_Popup_NoLightDismiss_Doesnt_Move_Focus_To_PlacementTarget()
         {
             using (CreateServicesWithFocus())

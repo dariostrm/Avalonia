@@ -496,7 +496,7 @@ namespace Avalonia.Controls
         {
             _subscriptionsOnOpen.Clear();
 
-            if(IsEditable && CanFocus(this))
+            if(IsEditable && FocusManager.CanFocus(this))
             {
                 Focus();
             }
@@ -545,7 +545,7 @@ namespace Avalonia.Controls
             }
         }
 
-        private bool CanFocus(Control control) => control.Focusable && control.IsEffectivelyEnabled && control.IsVisible;
+        private bool CanFocus(Control control) => control.Focusable && control.IsNavigableInEnabledState && control.IsVisible;
 
         private void UpdateSelectionBoxItem(object? item)
         {

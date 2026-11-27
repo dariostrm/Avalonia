@@ -154,6 +154,7 @@ namespace Avalonia.Input.TextInput
         private void TryFindAndApplyClient()
         {
             if (_focusedElement is not InputElement focused ||
+                !focused.IsEffectivelyEnabled ||
                 _im == null ||
                 !InputMethod.GetIsInputMethodEnabled(focused))
             {

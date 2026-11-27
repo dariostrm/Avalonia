@@ -1003,7 +1003,7 @@ namespace Avalonia.Controls
 
             _imClient.SetPresenter(_presenter, this);
 
-            if (IsFocused)
+            if (IsFocused && IsEffectivelyEnabled)
             {
                 _presenter?.ShowCaret();
             }
@@ -1015,7 +1015,7 @@ namespace Avalonia.Controls
 
             if (_presenter != null)
             {
-                if (IsFocused)
+                if (IsFocused && IsEffectivelyEnabled)
                 {
                     _presenter.ShowCaret();
                 }
@@ -1088,6 +1088,14 @@ namespace Avalonia.Controls
             {
                 UpdateCommandStates();
             }
+            else if (change.Property == IsEffectivelyEnabledProperty && IsFocused)
+            {
+                // A disabled TextBox can keep focus (AllowFocusWhenDisabled) but doesn't accept input.
+                if (change.GetNewValue<bool>())
+                    _presenter?.ShowCaret();
+                else
+                    _presenter?.HideCaret();
+            }
             else if (change.Property == CaretIndexProperty)
             {
                 OnCaretIndexChanged(change);
@@ -1154,7 +1162,8 @@ namespace Avalonia.Controls
 
             _imClient.SetPresenter(_presenter, this);
 
-            _presenter?.ShowCaret();
+            if (IsEffectivelyEnabled)
+                _presenter?.ShowCaret();
 
             if (SelectionStart != SelectionEnd)
                 _presenter?.TextSelectionHandleCanvas?.Show();

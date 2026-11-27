@@ -77,6 +77,18 @@ namespace Avalonia.Input
             KeyboardNavigation.IsTabStopProperty.AddOwner<InputElement>();
 
         /// <summary>
+        /// Defines the <see cref="AllowFocusWhenDisabled"/> property.
+        /// </summary>
+        public static readonly StyledProperty<bool> AllowFocusWhenDisabledProperty =
+            AvaloniaProperty.Register<InputElement, bool>(nameof(AllowFocusWhenDisabled), inherits: true);
+
+        /// <summary>
+        /// Defines the <see cref="IsTabStopWhenDisabled"/> property.
+        /// </summary>
+        public static readonly StyledProperty<bool> IsTabStopWhenDisabledProperty =
+            AvaloniaProperty.Register<InputElement, bool>(nameof(IsTabStopWhenDisabled), inherits: true);
+
+        /// <summary>
         /// Defines the <see cref="GotFocus"/> event.
         /// </summary>
         public static readonly RoutedEvent<FocusChangedEventArgs> GotFocusEvent =
@@ -511,6 +523,38 @@ namespace Avalonia.Input
             set => SetValue(IsTabStopProperty, value);
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the control can keep and receive keyboard focus
+        /// while it is disabled.
+        /// </summary>
+        /// <remarks>
+        /// By default, a focused control loses focus when it becomes disabled (for example a button
+        /// whose command reports CanExecute = false while it runs). When this property is true, the
+        /// control keeps focus, focus can be restored to it (for example when a popup or dialog
+        /// closes) and <see cref="Focus"/> succeeds. A disabled control never receives keyboard or
+        /// text input: key events are raised on its first enabled ancestor instead. Disabled controls
+        /// are skipped by keyboard navigation unless <see cref="IsTabStopWhenDisabled"/> is set.
+        /// This property is inherited, so it can be set once on a window.
+        /// </remarks>
+        public bool AllowFocusWhenDisabled
+        {
+            get => GetValue(AllowFocusWhenDisabledProperty);
+            set => SetValue(AllowFocusWhenDisabledProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether keyboard navigation (Tab and directional) stops at the
+        /// control while it is disabled.
+        /// </summary>
+        /// <remarks>
+        /// Only has an effect when <see cref="AllowFocusWhenDisabled"/> is true. This property is inherited.
+        /// </remarks>
+        public bool IsTabStopWhenDisabled
+        {
+            get => GetValue(IsTabStopWhenDisabledProperty);
+            set => SetValue(IsTabStopWhenDisabledProperty, value);
+        }
+
         /// <inheritdoc/>
         public bool IsEffectivelyEnabled
         {
@@ -519,14 +563,21 @@ namespace Avalonia.Input
             {
                 SetAndRaise(IsEffectivelyEnabledProperty, ref _isEffectivelyEnabled, value);
                 PseudoClasses.Set(":disabled", !value);
-
-                if (!IsEffectivelyEnabled && FocusManager.GetFocusManager(this) is { } focusManager
-                    && Equals(focusManager.GetFocusedElement(), this))
-                {
-                    focusManager.Focus(null);
-                }
+                OnFocusableWhileDisabledChanged();
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating whether the element can hold keyboard focus in its current enabled state.
+        /// </summary>
+        internal bool CanHoldFocusInEnabledState => IsEffectivelyEnabled || AllowFocusWhenDisabled;
+
+        /// <summary>
+        /// Gets a value indicating whether keyboard navigation may move focus to the element in its
+        /// current enabled state.
+        /// </summary>
+        internal bool IsNavigableInEnabledState =>
+            IsEffectivelyEnabled || (AllowFocusWhenDisabled && IsTabStopWhenDisabled);
 
         /// <summary>
         /// Gets or sets a value that determines the order in which elements receive focus when the
@@ -985,6 +1036,10 @@ namespace Avalonia.Input
             {
                 PseudoClasses.Set(":focus-within", change.GetNewValue<bool>());
             }
+            else if (change.Property == AllowFocusWhenDisabledProperty)
+            {
+                OnFocusableWhileDisabledChanged();
+            }
             else if (change.Property == IsVisibleProperty)
             {
                 if (!change.GetNewValue<bool>() && IsKeyboardFocusWithin && FocusManager.GetFocusManager(this) is { } focusManager)
@@ -998,6 +1053,27 @@ namespace Avalonia.Input
                         focusManager.Focus(null);
                     }
                 }
+            }
+        }
+
+        private void OnFocusableWhileDisabledChanged()
+        {
+            if (!IsFocused || FocusManager.GetFocusManager(this) is not { } focusManager
+                || !Equals(focusManager.GetFocusedElement(), this))
+                return;
+
+            if (!CanHoldFocusInEnabledState)
+            {
+                focusManager.Focus(null);
+            }
+            else
+            {
+                // The focused element kept focus but its enabled state changed: a disabled element must
+                // not have a text input client, an enabled one gets it back.
+                RaiseEvent(new TextInputMethodClientRequeryRequestedEventArgs
+                {
+                    RoutedEvent = InputMethod.TextInputMethodClientRequeryRequestedEvent
+                });
             }
         }
 
