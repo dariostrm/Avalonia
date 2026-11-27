@@ -230,12 +230,21 @@ namespace Avalonia.Input
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        private static IInputElement? GetFirstEnabledAncestorOrSelf(IInputElement? element)
+        {
+            while (element is { IsEffectivelyEnabled: false })
+                element = (element as Visual)?.VisualParent as IInputElement;
+            return element;
+        }
+
         public void ProcessRawEvent(RawInputEventArgs e)
         {
             if(e.Handled)
                 return;
 
-            var element = FocusedElement ?? e.Root.FocusRoot;
+            // A disabled element can hold focus (InputElement.AllowFocusWhenDisabled) but must not get input:
+            // like pointer input, key and text input goes to its first enabled ancestor instead.
+            var element = GetFirstEnabledAncestorOrSelf(FocusedElement) ?? e.Root.FocusRoot;
 
             if (e is RawKeyEventArgs keyInput)
             {

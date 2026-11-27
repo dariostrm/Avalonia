@@ -225,7 +225,7 @@
     </Style>
 
     <!-- Focused State -->
-    <Style Selector="^:focus">
+    <Style Selector="^:focus:not(:disabled)">
       <Setter Property="Foreground" Value="{DynamicResource TextControlForegroundFocused}" />
 
       <Style Selector="^ /template/ Border#PART_BorderElement">
