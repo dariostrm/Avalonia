@@ -435,7 +435,7 @@ partial class Build : NukeBuild
                 var packagePath = Path.Combine(
                     globalPackagesFolder,
                     packageId.ToLowerInvariant(),
-                    BuildParameters.LocalBuildVersion);
+                    Parameters.Version);
 
                 if (Directory.Exists(packagePath))
                     Directory.Delete(packagePath, true);

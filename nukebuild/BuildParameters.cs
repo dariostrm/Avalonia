@@ -131,7 +131,7 @@ public partial class Build
             if (isPackingToLocalCache)
             {
                 IsPackingToLocalCache = true;
-                Version = LocalBuildVersion;
+                Version = b.ForceNugetVersion ?? LocalBuildVersion;
             }
 
             // DIRECTORIES
